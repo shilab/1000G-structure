@@ -14,13 +14,13 @@ data/1KG_phase3_all_bkpts.v5.txt:
 	gunzip data/1KG_phase3_all_bkpts.v5.txt.gz
 
 data/protein_coding_genes.bed: data/Homo_sapiens.GRCh37.75.gtf
-	awk '$$2=="protein_coding" && $$3=="transcript" {print}' data/Homo_sapiens.GRCh37.75.gtf | awk -F $$'\t' '{print $$1"\t"$$4"\t"$$5"\t"$$1,$$4,$$5,$$9}'> data/protein_coding_genes.bed
+	awk '$$2=="protein_coding" && $$3=="CDS" {print}' data/Homo_sapiens.GRCh37.75.gtf | awk -F $$'\t' '{print $$1"\t"$$4"\t"$$5"\t"$$1,$$4,$$5,$$9}'> data/protein_coding_cds.bed
 
 data/breakpoints.bed: data/1KG_phase3_all_bkpts.v5.txt
 	cut -f 1-4 data/1KG_phase3_all_bkpts.v5.txt > data/breakpoints.bed
 
-data/breakpoint_intersections: data/breakpoints.bed data/protein_coding_genes.bed
-	bedtools intersect -a data/breakpoints.bed -b data/protein_coding_genes.bed > data/breakpoint_intersections
+data/breakpoint_intersections: data/breakpoints.bed data/protein_coding_cds.bed
+	bedtools intersect -a data/breakpoints.bed -b data/protein_coding_cds.bed > data/breakpoint_intersections
 
 data/gene_intersections: data/breakpoints.bed data/protein_coding_genes.bed
-	bedtools intersect -a data/protein_coding_genes.bed -b data/breakpoints.bed > data/gene_intersections
+	bedtools intersect -a data/protein_coding_cds.bed -b data/breakpoints.bed > data/cds_intersections
