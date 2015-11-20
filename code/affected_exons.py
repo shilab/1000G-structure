@@ -49,7 +49,10 @@ def main():
             if not (exon in affected_exons):
                 uneffected_exons.append(test_exon)
 
-        print(transcript + "\t" + sv + "\t" + ";".join(overlaps) + "\t" + ";".join(uneffected_exons)) 
+        if len(uneffected_exons) > 0:
+            print(transcript + "\t" + sv + "\t" + ";".join(overlaps) + "\t" + ";".join(uneffected_exons)) 
+        else:
+            print(transcript + "\t" + sv + "\t" + ";".join(overlaps) + "\t" + "NA")
 
 if __name__ == '__main__':
     main()
