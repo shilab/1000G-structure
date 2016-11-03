@@ -5,7 +5,7 @@ all: setup Data
 setup: 
 	mkdir -p data
 
-Data: data/cds_intersections data/affected_exons
+Data: data/tdup_sequences data/deletion_sequences
 
 data/Homo_sapiens.GRCh37.75.gtf:
 	wget -P ./data ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz
@@ -47,3 +47,33 @@ data/overlap_table: data/intersection_annotation_size_svs
 
 data/affected_exons: data/overlap_table data/transcript_info
 	python code/affected_exons.py data/transcript_info data/overlap_table > data/affected_exons
+
+data/longest_transcript: data/Homo_sapiens.GRCh37.75.gtf
+	python code/longest_transcript.py data/Homo_sapiens.GRCh37.75.gtf > data/longest_transcript
+
+data/del_pos: data/transcript_info data/intersection_annotation_size_svs
+	python code/del_pos.py data/transcript_info data/intersection_annotation_size_svs > data/del_pos
+
+data/tdup_pos: data/transcript_info data/intersection_annotation_size_svs
+	python code/tdup_pos.py data/transcript_info data/intersection_annotation_size_svs > data/tdup_pos
+
+data/tdup_pos_longest_transcript: data/tdup_pos data/longest_transcript
+	join -1 1 -2 2 <(sort -k1,1 data/tdup_pos) <(sort -k2,2 data/longest_transcript) -t $$'\t' > data/tdup_pos_longest_transcript
+
+data/del_pos_longest_transcript: data/del_pos data/longest_transcript
+	join -1 1 -2 2 <(sort -k1,1 data/del_pos) <(sort -k2,2 data/longest_transcript) -t $$'\t' > data/del_pos_longest_transcript
+
+data/del_pos_longest_transcript_strand : data/transcript_strand data/del_pos_longest_transcript
+	join -1 1 -2 1 <(sort -k1,1 data/transcript_strand) <(sort -k1,1 data/del_pos_longest_transcript) -t $$'\t' | awk -F $$'\t' '{print $$1"\t"$$7"\t"$$2"\t"$$3"\t"$$4"\t"$$5"\t"$$6}' > data/del_pos_longest_transcript_strand
+
+data/deletion_sequences: data/del_pos_longest_transcript_strand
+	Rscript --vanilla --no-save code/del_seq.R
+
+data/transcript_strand : data/Homo_sapiens.GRCh37.75.gtf
+	awk '{print $$12"\t"$$7}' data/Homo_sapiens.GRCh37.75.gtf | sed 's/;//g' | sed 's/"//g' | sort | uniq > data/transcript_strand
+
+data/tdup_pos_longest_transcript_strand : data/tdup_pos_longest_transcript data/transcript_strand
+	join -1 1 -2 1 <(sort -k1,1 data/transcript_strand) <(sort -k1,1 data/tdup_pos_longest_transcript) -t $$'\t' | awk -F $$'\t' '{print $$1"\t"$$7"\t"$$2"\t"$$3"\t"$$4"\t"$$5"\t"$$6}' > data/tdup_pos_longest_transcript_strand
+
+data/tdup_sequences: data/tdup_pos_longest_transcript_strand
+	Rscript --vanilla --no-save code/tdup_seq.R
