@@ -5,7 +5,7 @@ all: setup Data
 setup: 
 	mkdir -p data
 
-Data: data/tdup_sequences data/deletion_sequences
+Data: data/tdup_sequences_nonframeshift data/deletion_sequences_nonframeshift
 
 data/Homo_sapiens.GRCh37.75.gtf:
 	wget -P ./data ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz
@@ -77,3 +77,9 @@ data/tdup_pos_longest_transcript_strand : data/tdup_pos_longest_transcript data/
 
 data/tdup_sequences: data/tdup_pos_longest_transcript_strand
 	Rscript --vanilla --no-save code/tdup_seq.R
+
+data/deletion_sequences_nonframeshift: data/deletion_sequences
+	python code/frameshift.py data/deletion_sequences | grep 'NFS' > data/deletion_sequences_nonframeshift
+
+data/tdup_sequences_nonframeshift: data/tdup_sequences
+	python code/frameshift.py data/tdup_sequences | grep 'NFS' > data/tdup_sequences_nonframeshift
